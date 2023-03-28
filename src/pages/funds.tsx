@@ -58,7 +58,7 @@ const Home: NextPage = () => {
         alert(`TADA locked successfully!\n#${txHash}`)
       }
     } catch (error) {
-      const message = error instanceof AxiosError ? error?.response?.data?.error : error
+      const message = error instanceof AxiosError ? error?.response?.data?.error : error.message
       if (!message) return
       alert(`Transaction error: ${message}`)
     }

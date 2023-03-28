@@ -157,42 +157,6 @@ const Home: NextPage = () => {
     });
   };
 
-  const handleLockChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLockedTADA(e.target.value)
-  };
-
-  const handleUnlockChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setUnlockTx(e.target.value)
-  };
-
-  // async function mintNFT() {
-  //   const forgingScript = ForgeScript.withOneSignature(address);
-
-  //   const tx = new Transaction({ initiator: wallet });
-
-  //   const assetMetadata: AssetMetadata = {
-  //     name: "Sky G",
-  //     image: "https://skyg.tech/assets/images/logo.png",
-  //     mediaType: "image/jpg",
-  //     description: "Just a purple coin.",
-  //     artist: "This NFT is minted by Mesh (https://meshjs.dev/).",
-  //   };
-  //   const asset: Mint = {
-  //     assetName: assetMetadata.name,
-  //     assetQuantity: "1",
-  //     metadata: assetMetadata,
-  //     label: "721",
-  //     recipient:
-  //       "addr_test1qpucdy7muswj0jrxfj9n72r73ul8hfrxd54lrk3advl4v4pedc3j93xrhm4vqngjkgw9cp6ggz24w75azp98fv9axzxqxcyvnw",
-  //   };
-
-  //   tx.mintAsset(forgingScript, asset);
-
-  //   const unsignedTx = await tx.build();
-  //   const signedTx = await wallet.signTx(unsignedTx);
-  //   const txHash = await wallet.submitTx(signedTx);
-  // }
-
   return (
     <>
       <div
@@ -298,78 +262,6 @@ const Home: NextPage = () => {
                   </button>
                 </div>
               </div>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  flexDirection: "column",
-                  gap: "20px",
-                }}
-              >
-                <h3>Lock TADA</h3>
-                <div
-                  style={{
-                    border: "1px solid white",
-                    padding: "20px",
-                    display: "flex",
-                    gap: "30px",
-                    height: "85px",
-                  }}
-                >
-                  <input
-                    name="amount"
-                    placeholder="TADA amount"
-                    onChange={handleLockChanged}
-                    style={{
-                      padding: "10px",
-                      borderRadius: "10px",
-                      width: "260px",
-                    }}
-                  />
-                  <button
-                    onClick={lockToken}
-                    style={{ padding: "10px", borderRadius: "10px" }}
-                  >
-                    Lock Token
-                  </button>
-                </div>
-              </div>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              flexDirection: "column",
-              gap: "20px",
-            }}
-          >
-            <h3>Unlock TADA</h3>
-            <div
-              style={{
-                border: "1px solid white",
-                padding: "20px",
-                display: "flex",
-                gap: "30px",
-                height: "85px",
-              }}
-            >
-              <input
-                name="transaction"
-                placeholder="TX"
-                onChange={handleUnlockChanged}
-                style={{
-                  padding: "10px",
-                  borderRadius: "10px",
-                  width: "260px",
-                }}
-              />
-              <button
-                onClick={unlockToken}
-                style={{ padding: "10px", borderRadius: "10px" }}
-              >
-                Unlock
-              </button>
-            </div>
-          </div>
         </>
         )}
 

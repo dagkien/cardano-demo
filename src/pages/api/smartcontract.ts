@@ -40,7 +40,6 @@ export const getUtxosApi = async (address: string) => {
   const baseUrl = process.env.NEXT_PUBLIC_BLOCKFROST_URL || ''
   const action = `addresses/${address}/utxos`
   const config = { headers: {'project_id': process.env.NEXT_PUBLIC_BLOCKFROST_API_KEY}} as AxiosRequestConfig
-  console.log(config)
   const instance = axios.create(config)
   const result: { data: IUtxoApi[] } = await instance.get(`${baseUrl}${action}`, config)
   return result.data
