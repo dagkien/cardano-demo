@@ -100,7 +100,7 @@ const Home: NextPage = () => {
         console.log(`TADA unlocked successfully!\nTX# ${txHash}`)
         alert(`TADA unlocked successfully!\n#${txHash}`)
       }
-    } catch (err) {
+    } catch (err: any) {
       console.log(err)
       const message = err instanceof AxiosError ? err?.response?.data?.error : err.message
       if (!message) return
