@@ -1,5 +1,5 @@
 import axios, {AxiosRequestConfig} from 'axios'
-const BASE_URL = 'http://139.180.131.75:5101/'
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || ''
 
 export interface ILockTokenPayload {
   address: string
@@ -37,9 +37,10 @@ export const unlockTokenApi = async (payload: IUnlockTokenPayload) => {
 }
 
 export const getUtxosApi = async (address: string) => {
-  const baseUrl = 'https://cardano-preprod.blockfrost.io/api/v0/'
+  const baseUrl = process.env.NEXT_PUBLIC_BLOCKFROST_URL || ''
   const action = `addresses/${address}/utxos`
-  const config = { headers: {'project_id': 'preprodMq1wcBAUmEWGsJQPQbarPAEd6TJqRHj0'}} as AxiosRequestConfig
+  const config = { headers: {'project_id': process.env.NEXT_PUBLIC_BLOCKFROST_API_KEY}} as AxiosRequestConfig
+  console.log(config)
   const instance = axios.create(config)
   const result: { data: IUtxoApi[] } = await instance.get(`${baseUrl}${action}`, config)
   return result.data

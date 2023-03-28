@@ -1,7 +1,4 @@
-import {
-  KoiosProvider, largestFirst, Transaction,
-  UTxO
-} from "@meshsdk/core";
+
 import { CardanoWallet, useWallet } from "@meshsdk/react";
 import { NextPage } from "next";
 import { useEffect, useState } from "react";
@@ -15,7 +12,7 @@ import {
 import {AxiosError} from "axios";
 
 const TADA_LOVELACE = 1000000
-const SC_ADDRESS = 'addr_test1wq955cvne75hz2cal0q3wfmlqe5jv3w0vs7kaxkc0twef0gmhhqwg'
+const SC_ADDRESS = process.env.NEXT_PUBLIC_SC_ADDRESS || ''
 const Home: NextPage = () => {
   const { connected, wallet } = useWallet();
   const [lockedTADA, setLockedTADA] = useState<string>('');

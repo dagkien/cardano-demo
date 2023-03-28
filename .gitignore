@@ -1,3 +1,7 @@
 node_modules
 .vscode
 .next
+.git
+.env.production
+.env.local
+.env.development
