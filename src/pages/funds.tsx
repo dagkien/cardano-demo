@@ -6,7 +6,7 @@ import {
   getUtxosApi,
   ILockTokenPayload,
   IUnlockTokenPayload, IUtxoApi,
-  lockTokenApi, TUpdateLock, TUpDateLock,
+  lockTokenApi, TUpdateLock, TUpdateLock,
   unlockTokenApi, updateLockApi
 } from "@/pages/api/smartcontract";
 import {AxiosError} from "axios";
