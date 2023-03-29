@@ -14,7 +14,7 @@ import {script} from "@/config/contract";
 
 
 const TADA_LOVELACE = 1000000
-const SC_ADDRESS = 'addr_test1wq955cvne75hz2cal0q3wfmlqe5jv3w0vs7kaxkc0twef0gmhhqwg'
+const SC_ADDRESS = process.env.NEXT_PUBLIC_SC_ADDRESS || ''
 
 
 const Home: NextPage = () => {
@@ -22,7 +22,6 @@ const Home: NextPage = () => {
   const [assets, setAssets] = useState<null | any>(null);
   const [lockedTADA, setLockedTADA] = useState<string>('');
   const [unlockTx, setUnlockTx] = useState<string>('');
-  // const [loading, setLoading] = useState<boolean>(false);
   const [address, setAddress] = useState("");
   const [transferTo, setTransferTo] = useState({ address: null, amount: null });
 
@@ -56,30 +55,26 @@ const Home: NextPage = () => {
       return;
     }
     const utxos = await wallet.getUtxos();
-    console.log(utxos)
-    // const koios = new KoiosProvider('preprod');
-    // const scUtxos = await koios.fetchAddressUTxOs(SC_ADDRESS)
-    // console.log(scUtxos)
-    // const costLovelace = `${+lockedTADA * TADA_LOVELACE}`
-    // const assetMap = new Map<Unit, Quantity>()
-    // assetMap.set(
-    //   'lovelace',
-    //   costLovelace
-    // );
-    // const selectedUtxos = keepRelevant(assetMap, utxos)
-    // console.log(selectedUtxos)
-    // const tx = new Transaction({ initiator: wallet })
-    // tx.setChangeAddress(address)
-    // tx.setTxInputs(selectedUtxos)
-    // tx.sendLovelace({
-    //   address: SC_ADDRESS,
-    //   datum: {
-    //     value: resolveDataHash(100)
-    //   },
-    //   script: script
-    // }, costLovelace)
-    // const unsignedTx = await tx.build();
-    const unsignedTx ="84a300818258202501cc3a56ea06061716e8d24b1f8d5180f43c74847c097d7bffc2968100ce8b010182a300581d700b4a6193cfa9712b1dfbc117277f06692645cf643d6e9ad87add94bd01821a001e8480a2581cc5ca5c9778912e21fdbdc382d683b1f8477231cbd58ff2040c9c9569a3542d6d205465636877697a54657374746f6b656e0a1a000f4240515465636877697a54657374746f6b656e0a1a000f424056e2809c5465636877697a54657374746f6b656ee2809d02581ccc5ab2cb82c3dbd1e7c9cada80fbe4ad95aa187b717935ed5393610ba24444616e67014b44616e6744656d6f4e4654010282005820748f2aaa7f4f9915c4f0489b3e8813f8de03239c067357eb3b7ce56033191d6ba2005839008caa580675ca4a9f45e36d3ae22ba2c110a8fd06dd61085e9e67e83e9457983da9c748d62ec255ba44f7d27df3134c9b4963a02106403ac4011b0000000247486edd021a0002ad55a0f5f6"
+    const koios = new KoiosProvider('preprod');
+    const costLovelace = `${+lockedTADA * TADA_LOVELACE}`
+    const assetMap = new Map<Unit, Quantity>()
+    assetMap.set(
+      'lovelace',
+      costLovelace
+    );
+    const selectedUtxos = keepRelevant(assetMap, utxos)
+    const tx = new Transaction({ initiator: wallet })
+    tx.setChangeAddress(address)
+    tx.setTxInputs(selectedUtxos)
+    tx.sendLovelace({
+      address: SC_ADDRESS,
+      datum: {
+        value: resolveDataHash(100)
+      },
+      script: script
+    }, costLovelace)
+    const unsignedTx = await tx.build();
+    // const unsignedTx ="84a300818258202501cc3a56ea06061716e8d24b1f8d5180f43c74847c097d7bffc2968100ce8b010182a300581d700b4a6193cfa9712b1dfbc117277f06692645cf643d6e9ad87add94bd01821a001e8480a2581cc5ca5c9778912e21fdbdc382d683b1f8477231cbd58ff2040c9c9569a3542d6d205465636877697a54657374746f6b656e0a1a000f4240515465636877697a54657374746f6b656e0a1a000f424056e2809c5465636877697a54657374746f6b656ee2809d02581ccc5ab2cb82c3dbd1e7c9cada80fbe4ad95aa187b717935ed5393610ba24444616e67014b44616e6744656d6f4e4654010282005820748f2aaa7f4f9915c4f0489b3e8813f8de03239c067357eb3b7ce56033191d6ba2005839008caa580675ca4a9f45e36d3ae22ba2c110a8fd06dd61085e9e67e83e9457983da9c748d62ec255ba44f7d27df3134c9b4963a02106403ac4011b0000000247486edd021a0002ad55a0f5f6"
     const signedTx = await wallet.signTx(unsignedTx);
     const txHash = await wallet.submitTx(signedTx);
     if (txHash) {
@@ -117,6 +112,7 @@ const Home: NextPage = () => {
       .setChangeAddress(address)
       .setRequiredSigners([address]);
     const unsignedTx = await tx.build();
+    console.log(unsignedTx)
     const signedTx = await wallet.signTx(unsignedTx, true);
     const txHash = await wallet.submitTx(signedTx);
     if (txHash) {
@@ -143,6 +139,7 @@ const Home: NextPage = () => {
       `${lovelace}`
     );
     const unsignedTx = await tx.build();
+    console.log(unsignedTx)
     const signedTx = await wallet.signTx(unsignedTx);
     const txHash = await wallet.submitTx(signedTx);
     if (txHash) {

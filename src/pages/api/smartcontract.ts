@@ -8,6 +8,8 @@ export interface ILockTokenPayload {
   numDatum: number | string
 }
 
+export type TUpdateLock = Pick<ILockTokenPayload, 'address' | 'txin'>
+
 export interface IUnlockTokenPayload {
   address: string
   txin: string
@@ -25,11 +27,19 @@ export interface IUtxoApi {
   tx_hash: string
   tx_index: number
 }
+
+
 export const lockTokenApi = async (payload: ILockTokenPayload) => {
   const action = `transactions/lock`;
   const result = await axios.post(`${BASE_URL}${action}`, payload)
   return result.data
 }
+
+export const updateLockApi = async (payload: TUpdateLock): Promise<void> => {
+  const action = `transactions/update-lock`;
+  await axios.post(`${BASE_URL}${action}`, payload)
+}
+
 export const unlockTokenApi = async (payload: IUnlockTokenPayload) => {
   const action = `transactions/unlock`;
   const result = await axios.post(`${BASE_URL}${action}`, payload)
@@ -41,6 +51,9 @@ export const getUtxosApi = async (address: string) => {
   const action = `addresses/${address}/utxos`
   const config = { headers: {'project_id': process.env.NEXT_PUBLIC_BLOCKFROST_API_KEY}} as AxiosRequestConfig
   const instance = axios.create(config)
-  const result: { data: IUtxoApi[] } = await instance.get(`${baseUrl}${action}`, config)
+  let result: { data: IUtxoApi[] } = { data: [] }
+  try {
+    result = await instance.get(`${baseUrl}${action}`, config)
+  } catch (error) {}
   return result.data
 }

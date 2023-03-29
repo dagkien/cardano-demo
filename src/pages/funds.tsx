@@ -6,12 +6,13 @@ import {
   getUtxosApi,
   ILockTokenPayload,
   IUnlockTokenPayload, IUtxoApi,
-  lockTokenApi,
-  unlockTokenApi
+  lockTokenApi, TUpdateLock, TUpDateLock,
+  unlockTokenApi, updateLockApi
 } from "@/pages/api/smartcontract";
 import {AxiosError} from "axios";
 
 const TADA_LOVELACE = 1000000
+const LIMIT_SECRET = 100000000
 const SC_ADDRESS = process.env.NEXT_PUBLIC_SC_ADDRESS || ''
 const Home: NextPage = () => {
   const { connected, wallet } = useWallet();
@@ -26,6 +27,10 @@ const Home: NextPage = () => {
   async function lockToken() {
     if (!key || !lockedTADA) {
       alert("Please enter amount to lock TADA and secret ...");
+      return;
+    }
+    if (key < 10000000 || key >= 100000000) {
+      alert("Secret key must from 10000000 - 99999999");
       return;
     }
     if (+lockedTADA < 1.5) {
@@ -54,10 +59,15 @@ const Home: NextPage = () => {
       const txHash = await wallet.submitTx(signedTx);
       if (txHash) {
         setLockedTADA('')
+        const payload: TUpdateLock = {
+          address,
+          txin: txHash + '#0'
+        }
+        await updateLockApi(payload)
         console.log(`TADA locked successfully!\nTX# ${txHash}`)
         alert(`TADA locked successfully!\n#${txHash}`)
       }
-    } catch (error: any) {
+    } catch (error) {
       const message = error instanceof AxiosError ? error?.response?.data?.error : error.message
       if (!message) return
       alert(`Transaction error: ${message}`)
@@ -115,8 +125,8 @@ const Home: NextPage = () => {
 
   const handleOnChangeSecret = (e: React.ChangeEvent<HTMLInputElement>) => {
     const key = Number(e.target.value)
-    if (key > TADA_LOVELACE) {
-      alert(`Secret key must less than ${TADA_LOVELACE}`)
+    if (key >= LIMIT_SECRET) {
+      alert(`Secret key must less than ${LIMIT_SECRET}`)
       return
     }
     setKey(key)
@@ -232,6 +242,7 @@ const Home: NextPage = () => {
                   >
                     <input
                       name="transaction"
+                      autoComplete={"off"}
                       placeholder="TX"
                       onChange={handleUnlockChanged}
                       style={{
@@ -252,6 +263,7 @@ const Home: NextPage = () => {
                   >
                     <input
                       name="transaction"
+                      autoComplete={"off"}
                       onChange={(e) => setSecretUnlock(Number(e.target.value))}
                       placeholder="secret"
                       style={{
@@ -299,6 +311,7 @@ const Home: NextPage = () => {
                   >
                     <input
                       name="transaction"
+                      autoComplete={"off"}
                       placeholder="TADA Amount"
                       onChange={handleLockChanged}
                       style={{
@@ -318,8 +331,9 @@ const Home: NextPage = () => {
                     }}
                   >
                     <input
+                      autoComplete={"off"}
                       name="transaction"
-                      placeholder="key"
+                      placeholder="Secret"
                       onChange={handleOnChangeSecret}
                       style={{
                         padding: "10px",
@@ -328,7 +342,6 @@ const Home: NextPage = () => {
                       }}
                     />
                   </div>
-                  {key ? `Secret: ${secretLock}` : '' }
                   <button
                     onClick={lockToken}
                     style={{ padding: "10px", borderRadius: "10px" }}
