@@ -29,7 +29,7 @@ const Home: NextPage = () => {
       alert("Please enter amount to lock TADA and secret ...");
       return;
     }
-    if (key < 10000000 || key >= 100000000) {
+    if (+key < 10000000 || +key >= 100000000) {
       alert("Secret key must from 10000000 - 99999999");
       return;
     }
@@ -67,7 +67,7 @@ const Home: NextPage = () => {
         console.log(`TADA locked successfully!\nTX# ${txHash}`)
         alert(`TADA locked successfully!\n#${txHash}`)
       }
-    } catch (error) {
+    } catch (error: any) {
       const message = error instanceof AxiosError ? error?.response?.data?.error : error.message
       if (!message) return
       alert(`Transaction error: ${message}`)
