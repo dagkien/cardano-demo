@@ -29,7 +29,7 @@ const Home: NextPage = () => {
       alert("Please enter amount to lock TADA and secret ...");
       return;
     }
-    if (+key < 10000000 || +key >= 100000000) {
+    if (+key < 1 || +key >= 100000000) {
       alert("Secret key must from 10000000 - 99999999");
       return;
     }
@@ -72,6 +72,19 @@ const Home: NextPage = () => {
       if (!message) return
       alert(`Transaction error: ${message}`)
     }
+  }
+
+  const generateSecret = (i: number) => {
+    i = Number(i)
+    const len = 8
+    const numberLen = `${i}`.length
+    const numberZero = len - numberLen
+    let str = ''
+    if (numberLen > 0) {
+      const zeros = '0'.repeat(numberZero)
+      str = `${str}${zeros}${i}`
+    }
+    return str
   }
 
   async function unlockToken() {
@@ -131,7 +144,7 @@ const Home: NextPage = () => {
     }
     setKey(key)
     const slotNumber = Math.floor(new Date().getTime() / 1000) - 1679739174 + 24055973
-    const secret = Number(`${slotNumber}${e.target.value}`)
+    const secret = Number(`${slotNumber}${generateSecret(Number(e.target.value))}`)
     setSecretLock(secret)
   }
 
