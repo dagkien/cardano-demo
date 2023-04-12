@@ -54,8 +54,8 @@ const Mint: NextPage = () => {
         const unit: Unit = policyId + fromText("TOKU TEST");
 
         const amount: bigint = BigInt(+tokens)
-
-        const tx = await lucid
+        try {
+            const tx = await lucid
             .newTx()
             .mintAssets({[unit]: amount}, Data.void())
             .attachMintingPolicy(freePolicy)
@@ -63,11 +63,16 @@ const Mint: NextPage = () => {
             .complete();
         const signedTx = await tx.sign().complete();
         const txHash = await signedTx.submit()
-        if (txHash) {
-            console.log("tid: " + txHash)
-            setTokens(0)
-            setTx(txHash)
+            if (txHash) {
+                console.log("tid: " + txHash)
+                setTokens(0)
+                setTx(txHash)
+            }
+        } catch (error: unknown) {
+            alert((error as Error).message)
+            console.log(error)
         }
+        
     }
     useEffect(() => {
         document.title = "Mint Tokens"
@@ -101,7 +106,7 @@ const Mint: NextPage = () => {
                 <input type="text" onChange={handleChange} placeholder="mint tokens" style={{ padding: "10px 20px", borderRadius: "4px", margin: "25px 10px", height: "55px", width: "300px" }} />
                 {mint ? <button style={{ border: "none", cursor: "pointer", padding: "10px 20px", borderRadius: "4px", height: "55px", background: "#349EA3", color: "white" }} onClick={onMint}>Mint</button> : <button style={{ cursor: "pointer", border: "none", padding: "10px 20px", borderRadius: "4px", height: "55px", background: "#F05503", color: "white" }} onClick={onMint}>Burn</button>}
             </div>}
-            {tx  && <div><a href={`https://preprod.cexplorer.io/tx/${tx}`} target="_blank">{`https://preprod.cexplorer.io/tx/${tx}`}</a></div>}
+            {tx && <div><a href={`https://preprod.cexplorer.io/tx/${tx}`} target="_blank">{`https://preprod.cexplorer.io/tx/${tx}`}</a></div>}
         </div>
     );
 };
