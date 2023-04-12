@@ -69,7 +69,7 @@ const Mint: NextPage = () => {
                 setTx(txHash)
             }
         } catch (error: unknown) {
-            alert((error as Error).message)
+            alert((error as Error).toString())
             console.log(error)
         }
         
