@@ -26,6 +26,9 @@ const css = `
         border: 5px solid #4fdbcb;
         border-radius: 10px;
     }
+    img {
+        border-radius: 6px;
+    }
     button {
         padding: 10px 20px;
         border-radius: 10px;
@@ -41,6 +44,8 @@ const css = `
 
 const MintNFT = () => {
 	const [metadata, setMetadata] = useState({});
+	const [img, setImg] = useState("");
+
 	const handleChange = (e: any) => {
 		const { name, value, files } = e.target;
 		if (value) {
@@ -48,11 +53,13 @@ const MintNFT = () => {
 				...metadata,
 				[name]: value,
 			});
+			setImg(URL.createObjectURL(e.target.files[0]));
 		} else {
 			setMetadata({
 				...metadata,
-				[name]: files,
+				[name]: files[0],
 			});
+			setImg(URL.createObjectURL(files[0]));
 		}
 	};
 
@@ -66,7 +73,13 @@ const MintNFT = () => {
 			<div className="container2">
 				<div>
 					<div className="img">
-						<img src={metadata?.nftImage} />
+						{img && (
+							<img
+								src={img}
+								style={{ height: "100%", width: "100%" }}
+								id="preview"
+							/>
+						)}
 					</div>
 					<input type="file" onChange={handleChange} name="nftImage" />
 				</div>
