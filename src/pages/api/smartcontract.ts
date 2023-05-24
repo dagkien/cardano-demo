@@ -1,4 +1,5 @@
 import axios, {AxiosRequestConfig} from 'axios'
+import { IOrderCheckout, IOrderPayload } from '..'
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || ''
 
 export interface ILockTokenPayload {
@@ -28,6 +29,11 @@ export interface IUtxoApi {
   tx_index: number
 }
 
+export interface ILoginPayload {
+  email: string
+  password: string
+}
+
 
 export const lockTokenApi = async (payload: ILockTokenPayload) => {
   const action = `transactions/lock`;
@@ -55,5 +61,51 @@ export const getUtxosApi = async (address: string) => {
   try {
     result = await instance.get(`${baseUrl}${action}`, config)
   } catch (error) {}
+  return result.data
+}
+
+export const login = async (payload: ILoginPayload) => {
+  const action = `auth/login`;
+  const result = await axios.post(`${BASE_URL}${action}`, payload)
+  return result.data
+}
+
+export const getAdminNfts = async (token: string) => {
+  const action = 'nft-groups?page=1&perPage=100&orderBy=desc&status=active'
+  const result = await axios.get(`${BASE_URL}${action}`, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  })
+  return result.data
+}
+
+export const getUserInventory = async (token: string) => {
+  const action = 'nft-groups/inventory?page=1&perPage=100&orderBy=desc&status=active'
+  const result = await axios.get(`${BASE_URL}${action}`, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  })
+  return result.data
+}
+
+export const createOrder = async (token: string, order: IOrderPayload) => {
+  const action = 'orders'
+  const result = await axios.post(`${BASE_URL}${action}`, order, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  })
+  return result.data
+}
+
+export const checkoutOrder = async (token: string, payload: IOrderCheckout) => {
+  const action = 'orders/checkout'
+  const result = await axios.post(`${BASE_URL}${action}`, payload, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  })
   return result.data
 }

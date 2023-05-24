@@ -11,38 +11,138 @@ import { useEffect, useState } from "react";
 import { keepRelevant } from '@meshsdk/core';
 import {Data} from "@meshsdk/core/dist/common/types/Data";
 import {script} from "@/config/contract";
+import { checkoutOrder, createOrder, getAdminNfts, getUserInventory, login } from "./api/smartcontract";
 
 
 const TADA_LOVELACE = 1000000
 const SC_ADDRESS = process.env.NEXT_PUBLIC_SC_ADDRESS || ''
 
+interface INFTGroupAsset {
+  id: number
+  assetId: string
+  authorId: number
+  availableNfts: number
+  name: string
+  price: string
+  currency: string
+  onSale: boolean
+  quantity: string
+  rarity: string
+  status: string
+  hasNfts: number
+}
+
+interface IFields {
+  address: string
+  assetName: string
+  assetID: string
+  quantity: string
+}
+
+interface IBuyNFTs {
+  id: number
+  quantity: number
+  price: number
+  currency: string
+}
+
+const DEFAULT: IFields = {
+  address: '',
+  assetName: '',
+  assetID: '',
+  quantity: '',
+}
+
+interface IOrderGroup {
+  id: number
+  quantity: number
+}
+
+export interface IOrderPayload {
+  orderGroups: IOrderGroup[]
+  description: string
+}
+
+export interface IOrderCheckout {
+  txHash: string
+  orderId: number
+}
 
 const Home: NextPage = () => {
   const { connected, wallet } = useWallet();
-  const [assets, setAssets] = useState<null | any>(null);
+  const [assets, setAssets] = useState<INFTGroupAsset[]>([]);
+  const [buyNFTs, setBuyNFTs] = useState<IBuyNFTs[]>([]);
+  const [inventoryAssets, setInventoryAssets] = useState<INFTGroupAsset[]>([]);
+  const [accessToken, setAccessToken] = useState<string>('');
+  const [txHashSuccess, setTxHashSuccess] = useState<string>('');
   const [lockedTADA, setLockedTADA] = useState<string>('');
-  const [unlockTx, setUnlockTx] = useState<string>('');
+  const [unlockTx, _] = useState<string>('');
   const [address, setAddress] = useState("");
+  const [email, setEmail] = useState<string>('')
+  const [membership, setMembership] = useState<string>('N')
   const [transferTo, setTransferTo] = useState({ address: null, amount: null });
 
-  // async function getAssets() {
-  //   if (connected) {
-  //     setLoading(true);
-  //     const _assets = await wallet.getAssets();
-  //     setAssets(_assets);
-  //     setLoading(false);
-  //     const address_wallet = await wallet?.getChangeAddress();
-  //     setAddress(address_wallet);
-  //   }
-  // }
+  async function getAssets(token: string) {
+    if (!connected) return
+    const results = await getAdminNfts(token);
+    const nftGroup = results.data as INFTGroupAsset[]
+    setAssets(nftGroup.filter(group => group.currency === 'ADA' && group.onSale))
+  }
+
+  async function getUserNFTs(token: string) {
+    const results = await getUserInventory(token);
+    const nftGroup = results.data as INFTGroupAsset[]
+    setInventoryAssets(nftGroup.filter(group => group.currency === 'ADA' && group.onSale))
+  }
+
+  const signMessage = async (message: string, walletname: string) => {
+    const api = await window.cardano[walletname].enable();
+    const hexAddresses = await api.getRewardAddresses();
+    const hexAddress = hexAddresses[0];
+    let hexMessage = '';
+  
+    for (var i = 0, l = message.length; i < l; i++) {
+      hexMessage += message.charCodeAt(i).toString(16);
+    }
+  
+    try {
+      const { signature, key } = await api.signData(hexAddress, hexMessage);
+      console.log('signature', signature, 'key', key);
+    } catch (error) {
+      console.warn(error);
+    }
+  };
+  const getAddress = async () => {
+    if (!connected) return
+    const addressWallet = await wallet?.getChangeAddress() as string;
+    setAddress(addressWallet);
+  }
+
+  const adminLogin = async () => {
+    const email = 'admin@gmail.com'
+    const password = '123456'
+    const result = await login({ email, password })
+    const accessToken = result?.accessToken || ''
+    await getAssets(accessToken)
+  }
+
+  const getInventory = async () => {
+    const email = 'phdang.tk@gmail.com'
+    const password = '123456'
+    const result = await login({ email, password })
+    setEmail(result?.user?.email || '')
+    setMembership(result?.user?.membership || '')
+    const token = result?.accessToken || ''
+    await getUserNFTs(token)
+    setAccessToken(token)
+  }
 
   useEffect(() => {
-    const getAddress = async () => {
-      if (!connected) return
-      const addressWallet = await wallet?.getChangeAddress() as string;
-      setAddress(addressWallet);
-    }
     getAddress()
+    if (connected) {
+      adminLogin()
+      getInventory()
+    }
   }, [connected])
 
   async function lockToken() {
@@ -122,37 +222,81 @@ const Home: NextPage = () => {
     }
   }
 
-
   async function sendADA() {
-    const { address, amount } = transferTo;
-    if (!address || !amount) {
-      alert("Please enter Address and amount...");
-      return;
+    const orderGroups = buyNFTs.filter(nft => nft.quantity > 0).map(nft => {
+      return { id: nft.id, quantity: nft.quantity }
+    }) as IOrderGroup[]
+    const adaAmount = buyNFTs.filter(nft => nft.quantity > 0 && nft.currency === 'ADA').reduce((acc: number, el: IBuyNFTs) => {
+      return Number(acc) + Number(el.price) * el.quantity
+    }, 0)
+    const lovelace = adaAmount * TADA_LOVELACE
+    const adminAddress = process.env.NEXT_PUBLIC_SC_ADDRESS || ''
+    const order: IOrderPayload = {
+      orderGroups,
+      description: 'Test order buying by ADA'
     }
-    if (amount < 1) {
-      alert("Amount must be greater than or equal 1 TADA");
-      return;
-    }
-    const lovelace = amount * TADA_LOVELACE
-    const tx = new Transaction({ initiator: wallet }).sendLovelace(
-      address,
-      `${lovelace}`
-    );
-    const unsignedTx = await tx.build();
-    console.log(unsignedTx)
-    const signedTx = await wallet.signTx(unsignedTx);
-    const txHash = await wallet.submitTx(signedTx);
-    if (txHash) {
-      alert(`TADA sent successfully!\n#${txHash}`)
+    try {
+      const result = await createOrder(accessToken, order)
+      if (!result?.id) {
+        alert('Could not create order!')
+        return
+      }
+  
+      const orderId = Number(result?.id)
+      const tx = new Transaction({ initiator: wallet }).setMetadata(0, { orderId }).sendLovelace(adminAddress, `${lovelace}`)
+      const unsignedTx = await tx.build()
+      const signedTx = await wallet.signTx(unsignedTx)
+      const txHash = await wallet.submitTx(signedTx)
+      
+      const payload: IOrderCheckout = {
+        txHash,
+        orderId
+      }
+      const resultOrder = await checkoutOrder(accessToken, payload)
+      if (resultOrder) {
+        alert(`Your order #${orderId} is being processed! Please refresh after 20 - 60 seconds to confirm your order`)
+      }
+      setTxHashSuccess(txHash)
+    } catch (error: unknown) {
+      alert(`Create order failed with error: ${(error as Error).message}`)
     }
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTransferTo({
-      ...transferTo,
-      [e.target.name]: e.target.value,
-    });
-  };
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>, id: number) => {
+    const value = e.target.value
+    if (Number(value) < 1) return
+    const chosen = buyNFTs.find(nft => Number(nft.id) === Number(id))
+    if (chosen) {
+      const asset = assets.find(e => Number(e.id) === Number(id))
+      if (Number(asset?.availableNfts) < Number(value)) {
+        alert('Not enough quantity to buy!')
+        e.target.value = ''
+        return
+      }
+      buyNFTs.forEach(nft => {
+        if (Number(nft.id) === Number(id)) {
+          nft.quantity = Number(value)
+        }
+      })
+      setBuyNFTs(buyNFTs)
+    } else {
+      const asset = assets.find(e => Number(e.id) === Number(id))
+      if (Number(asset?.availableNfts) < Number(value)) {
+        alert('Not enough quantity to buy!')
+        e.target.value = ''
+        return
+      }
+      const newBuyNFT: IBuyNFTs = {
+        id,
+        quantity: Number(value),
+        price: Number(asset?.price || 0),
+        currency: asset?.currency || ''
+      }
+      const newBuyNFTs = [...buyNFTs, newBuyNFT]
+      setBuyNFTs(newBuyNFTs)
+    }
+  }
+
 
   return (
     <>
@@ -166,99 +310,73 @@ const Home: NextPage = () => {
           gap: "50px",
         }}
       >
-        {connected && address}
+        {!connected && !address}
         <CardanoWallet label="Connect to wallet"/>
-        {connected && assets && (
-          <>
-            <h3>NFT Listing</h3>
-            <div
-              style={{
-                display: "flex",
-                gap: "20px",
-                justifyContent: "center",
-              }}
-            >
-              {assets?.map((item: any) => (
-                <div
-                  key={item?.fingerprint}
-                  style={{
-                    height: "200px",
-                    width: "fit-content",
-                    border: "1px solid white",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    gap: "20px",
-                    padding: "10px",
-                  }}
-                >
-                  <div>NFT: {item?.assetName}</div>
-                  <a
-                    style={{ color: "greenyellow" }}
-                    href={`https://preprod.cexplorer.io/asset/${item?.fingerprint}`}
-                  >
-                    {item?.fingerprint}
-                  </a>
-                </div>
-              ))}
-            </div>
-
-            {/* <div>
-              <button onClick={() => mintNFT()} style={{ padding: "20px" }}>
-                Mint NFT
-              </button>
-            </div> */}
-          </>
-        )}
         {connected && (
         <>
-        <div
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  flexDirection: "column",
-                  gap: "20px",
-                }}
-              >
-                <h3>Transfer TADA</h3>
-                <div
-                  style={{
-                    border: "1px solid white",
-                    padding: "20px",
-                    display: "flex",
-                    gap: "30px",
-                    height: "85px",
-                  }}
-                >
-                  <input
-                    name="address"
-                    placeholder="address"
-                    onChange={handleChange}
-                    style={{
-                      padding: "10px",
-                      borderRadius: "10px",
-                      width: "260px",
-                    }}
-                  />
-                  <input
-                    name="amount"
-                    placeholder="TADA amount"
-                    onChange={handleChange}
-                    style={{
-                      padding: "10px",
-                      borderRadius: "10px",
-                      width: "260px",
-                    }}
-                  />
-                  <button
-                    onClick={sendADA}
-                    style={{ padding: "10px", borderRadius: "10px" }}
-                  >
-                    Transfer
-                  </button>
-                </div>
-              </div>
+          <table>
+            <thead>
+              <tr>
+                <th style={{ border: '1px solid white', padding: '10px' }}>ID #</th>
+                <th style={{ border: '1px solid white', padding: '10px' }}>NFT Name</th>
+                <th style={{ border: '1px solid white', padding: '10px' }}>NFT Asset ID</th>
+                <th style={{ border: '1px solid white', padding: '10px' }}>Category</th>
+                <th style={{ border: '1px solid white', padding: '10px' }}>Quantity</th>
+                <th style={{ border: '1px solid white', padding: '10px' }}>Available</th>
+                <th style={{ border: '1px solid white', padding: '10px' }}>Price</th>
+                <th style={{ border: '1px solid white', padding: '10px' }}>Currency</th>
+                <th style={{ border: '1px solid white', padding: '10px' }}>Buy Quantity</th>
+              </tr>
+            </thead>
+            <tbody>
+            {assets?.map((item) => (
+                <tr key={item.id}>
+                  <th style={{ border: '1px solid white', padding: '10px' }}>{item.id}</th>
+                  <td style={{ border: '1px solid white', padding: '10px' }}>{item.name}</td>
+                  <td style={{ border: '1px solid white', padding: '10px' }}>{item.assetId}</td>
+                  <td style={{ border: '1px solid white', padding: '10px' }}>{item.rarity}</td>
+                  <td style={{ border: '1px solid white', padding: '10px' }}>{item.quantity}</td>
+                  <td style={{ border: '1px solid white', padding: '10px' }}>{item.availableNfts}</td>
+                  <td style={{ border: '1px solid white', padding: '10px' }}>{item.price}</td>
+                  <td style={{ border: '1px solid white', padding: '10px' }}>{item.currency}</td>
+                  <td style={{ border: '1px solid white', padding: '10px' }}>
+                    <input type="number" min="1" onChange={e => handleChange(e, Number(item.id))} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <button
+            onClick={sendADA}
+            style={{ padding: "10px", borderRadius: "10px", cursor: 'pointer' }}
+          >
+            Buy NFTs
+          </button>
+          { txHashSuccess !== '' ? <p>txHash: {txHashSuccess}</p> : null }
+          <p>Email: {email}</p>
+          <p>Membership: {membership}</p>
+          <table>
+            <thead>
+              <tr>
+                <th style={{ border: '1px solid white', padding: '10px' }}>ID #</th>
+                <th style={{ border: '1px solid white', padding: '10px' }}>NFT Name</th>
+                <th style={{ border: '1px solid white', padding: '10px' }}>NFT Asset ID</th>
+                <th style={{ border: '1px solid white', padding: '10px' }}>Category</th>
+                <th style={{ border: '1px solid white', padding: '10px' }}>Quantity</th>
+              </tr>
+            </thead>
+            <tbody>
+            {inventoryAssets?.map((item) => (
+                <tr key={item.id}>
+                  <th style={{ border: '1px solid white', padding: '10px' }}>{item.id}</th>
+                  <td style={{ border: '1px solid white', padding: '10px' }}>{item.name}</td>
+                  <td style={{ border: '1px solid white', padding: '10px' }}>{item.assetId}</td>
+                  <td style={{ border: '1px solid white', padding: '10px' }}>{item.rarity}</td>
+                  <td style={{ border: '1px solid white', padding: '10px' }}>{item.hasNfts}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </>
         )}
 
