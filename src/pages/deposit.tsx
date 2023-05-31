@@ -1,64 +1,10 @@
 import {
   Asset,
-  KoiosProvider,
-  Quantity,
-  resolveDataHash,
-  Transaction,
-  Unit
-} from "@meshsdk/core";
-import { CardanoWallet, useWallet } from "@meshsdk/react";
-import { NextPage } from "next";
-import { useEffect, useState } from "react";
-import { checkoutOrder, createOrder, getAdminNfts, getUserInventory, login } from "./api/smartcontract"
-import { BlockFrostAPI } from "@blockfrost/blockfrost-js";
-import { Blockfrost } from "lucid-cardano";
-
-const TADA_LOVELACE = 1000000
-const SC_ADDRESS = process.env.NEXT_PUBLIC_SC_ADDRESS || ''
-
-interface INFTGroupAsset {
-  id: number
-  assetId: string
-  authorId: number
-  availableNfts: number
-  name: string
-  price: string
-  currency: string
-  onSale: boolean
-  quantity: string
-  rarity: string
-  status: string
-  hasNfts: number
-}
-
-interface IFields {
-  address: string
-  assetName: string
-  assetID: string
-  quantity: string
-}
-
-const DEFAULT: IFields = {
-  address: '',
-  assetName: '',
-  assetID: '',
-  quantity: '',
-}
-
-interface IOrderGroup {
-  id: number
-  quantity: number
-}
-
-export interface IOrderPayload {
-  orderGroups: IOrderGroup[]
-  description: string
-}
-
-export interface IOrderCheckout {
-  txHash: string
-  orderId: number
-}
+  Transaction
+} from "@meshsdk/core"
+import { CardanoWallet, useWallet } from "@meshsdk/react"
+import { NextPage } from "next"
+import { useEffect, useState } from "react"
 
 export interface INFTPayload {
   assetName: string
@@ -161,7 +107,6 @@ const Deposit: NextPage = () => {
     }
   }
 
-
   return (
     <>
       <div
@@ -211,12 +156,7 @@ const Deposit: NextPage = () => {
           {txHashSuccess ? <p>Transaction {txHashSuccess}</p> : null}
         </>
         )}
-
       </div>
-
-      {/* <button onClick={() => getAssets()} style={{ padding: "20px" }}>
-        Get Assets
-      </button> */}
     </>
   );
 };
