@@ -5,6 +5,7 @@ import {
 import { CardanoWallet, useWallet } from "@meshsdk/react"
 import { NextPage } from "next"
 import { useEffect, useState } from "react"
+import { importNFT, login } from "./api/smartcontract"
 
 export interface INFTPayload {
   assetName: string
@@ -17,6 +18,7 @@ export interface INFTPayload {
 const Deposit: NextPage = () => {
   const { connected, wallet } = useWallet();
   const [assets, setAssets] = useState<INFTPayload[]>([]);
+  const [accessToken, setAccessToken] = useState<string>('');
   const [nftsDeposit, setNftsDeposit] = useState<INFTPayload[]>([]);
   const [txHashSuccess, setTxHashSuccess] = useState<string>('');
   const [address, setAddress] = useState<string>('');
@@ -28,6 +30,14 @@ const Deposit: NextPage = () => {
       return r.policyId === policyID
     })
     setAssets(assets)
+  }
+
+  async function getToken() {
+    const email = 'phdang.tk@gmail.com'
+    const password = '123456'
+    const result = await login({ email, password })
+    const token = result?.accessToken || ''
+    setAccessToken(token)
   }
 
   const getAddress = async () => {
@@ -44,6 +54,7 @@ const Deposit: NextPage = () => {
     getAddress()
     if (connected) {
       getInventory()
+      getToken()
     }
   }, [connected])
 
@@ -62,7 +73,11 @@ const Deposit: NextPage = () => {
       const signedTx = await wallet.signTx(unsignedTx)
       const txHash = await wallet.submitTx(signedTx)
       if (txHash) {
-        alert(`Your transaction #${txHash} is being processed! Please refresh after 20 - 60 seconds to confirm your order`)
+        const resp = await importNFT(accessToken, { txHash })
+        if (resp) {
+          console.log(resp)
+          alert(`Your transaction #${txHash} is being processed! Please refresh after 20 - 60 seconds to confirm your order`)
+        }
       }
       setTxHashSuccess(txHash)
     } catch (error: unknown) {

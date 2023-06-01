@@ -68,6 +68,10 @@ export interface IOrderCheckout {
   orderId: number
 }
 
+export interface IImportNFT {
+  txHash: string
+}
+
 const Home: NextPage = () => {
   const { connected, wallet } = useWallet();
   const [assets, setAssets] = useState<INFTGroupAsset[]>([]);

@@ -1,5 +1,5 @@
 import axios, {AxiosRequestConfig} from 'axios'
-import { IOrderCheckout, IOrderPayload } from '..'
+import { IImportNFT, IOrderCheckout, IOrderPayload } from '..'
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || ''
 
 export interface ILockTokenPayload {
@@ -103,6 +103,16 @@ export const createOrder = async (token: string, order: IOrderPayload) => {
 export const checkoutOrder = async (token: string, payload: IOrderCheckout) => {
   const action = 'orders/checkout'
   const result = await axios.post(`${BASE_URL}${action}`, payload, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  })
+  return result.data
+}
+
+export const importNFT = async (token: string, payload: IImportNFT) => {
+  const action = 'nft-groups/import'
+  const result = await axios.patch(`${BASE_URL}${action}`, payload, {
     headers: {
       Authorization: `Bearer ${token}`
     }
